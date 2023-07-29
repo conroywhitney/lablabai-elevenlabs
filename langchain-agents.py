@@ -163,14 +163,14 @@ You will speak in the style of {character_name}.
 Do not say the same things over and over again.
 Speak in the first person from the perspective of {character_name}
 For describing your own body movements, wrap your description in '*'.
+Speak only from the perspective of {character_name}.
+Keep your dialogue consistent with your role in the original text, one dialogue block at a time.
+You may incorporate aspects of the scene outside your dialogue, but do so in a way that is consistent with your role in the original text.
 Do not change roles!
 Do not speak from the perspective of anyone else.
-Speak only from the perspective of {character_name}.
-Keep your dialogue consistent with your role in the original text, one line at a time.
-You may incorporate aspects of the scene outside your dialogue, but do so in a way that is consistent with your role in the original text.
 Stop speaking the moment you finish speaking from your perspective.
 Do not add anything else.
-Allow for breaks in the conversation so other characters may speak.
+Allow for breaks in the conversation so other characters may speak, following the flow of the original text.
     """
         )
     )
@@ -224,6 +224,7 @@ def generate_character_bidding_template(character_header):
 On the scale of 1 to 10, where 1 is the lowest and 10 is the highest, how much do you want to speak next, based on the original chapter text?
 
 Remember, you are re-creating Chapter 1 using only dialogue from your own character, so don't speak when it's someone else's turn to speak based on the original text.
+Allow for breaks in the conversation so other characters may speak, following the flow of the original text.
 
 {{recent_message}}
 
@@ -614,7 +615,7 @@ n = 0
 
 simulator = DialogueSimulator(agents=characters, selection_function=select_next_speaker)
 simulator.reset()
-simulator.inject("Context", specified_topic)
+# simulator.inject("Context", specified_topic)
 simulator.inject("Original Text", original_text)
 
 # simulator.inject(""Debate Moderator"", specified_topic)
