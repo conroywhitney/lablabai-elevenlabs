@@ -118,124 +118,86 @@ class BiddingDialogueAgent(DialogueAgent):
         return bid_string
 
 character_names = ["Sherlock Holmes", "Dr. John Watson", "Dr. James Mortimer"]
-topic = "transcontinental high speed rail"
 word_limit = 50
 
-game_description = f"""We are working on a project to create AI-generated audio adaptations of classic literature. Our current book is "The Hound of the Baskervilles" by Arthur Conan Doyle. The goal is to create an immersive and engaging audio experience for the audience, in the form of episodic audio dramas. The final product will be generated using simulated voices for dialogue and potential sound cues based on the narrative. 
-
-Please use the Dialogue Summary and Original Text to transform the original text dialogues into engaging, human-like conversations. Please re-create the original as closely as possible while still adapting it to an audio screenplay format.
-
-The characters are: {', '.join(character_names)}."""
-
-# player_descriptor_system_message = SystemMessage(
-#     content="You can add detail to the description of each presidential candidate."
-# )
-
-# def generate_character_description(character_name):
-#     character_specifier_prompt = [
-#         player_descriptor_system_message,
-#         HumanMessage(
-#             content=f"""{game_description}
-#             Please reply with a creative description of the presidential candidate, {character_name}, in {word_limit} words or less, that emphasizes their personalities. 
-#             Speak directly to {character_name}.
-#             Do not add anything else."""
-#         ),
-#     ]
-#     character_description = ChatOpenAI(temperature=1.0)(
-#         character_specifier_prompt
-#     ).content
-#     return character_description
+game_description = f"""We are recreating the story "The Hound of the Baskervilles" by Arthur Conan Doyle in the form of an immersive audio drama. Your task is to adopt the persona of your character and participate in the conversation in a manner that mirrors the original book text. The characters participating are: {', '.join(character_names)}."""
 
 def generate_character_header(character_name, character_description):
     return f"""{game_description}
-Your name is {character_name}.
-You are a character in the book 'The Hound of the Baskervilles' by Sir Arthur Conan Doyle.
-Your description is as follows: {character_description}
-You are re-creating Chapter 1 using only dialogue, allowing for breaks in the conversation so other characters may speak.
-Your goal is to be as in-character as possible, while still communicating the story and circumstances to the audience.
-"""
+You are {character_name} from the story 'The Hound of the Baskervilles'. 
+{character_description}
+You are tasked with recreating Chapter 1 only through dialogue. Remember to stay in character and aim to mimic the original story as closely as possible."""
 
 def generate_character_system_message(character_name, character_header):
     return SystemMessage(
         content=(
             f"""{character_header}
-You will speak in the style of {character_name}.
-Do not say the same things over and over again.
-Speak in the first person from the perspective of {character_name}
-For describing your own body movements, wrap your description in '*'.
-Speak only from the perspective of {character_name}.
-Keep your dialogue consistent with your role in the original text, one dialogue block at a time.
-You may incorporate aspects of the scene outside your dialogue, but do so in a way that is consistent with your role in the original text.
-Do not change roles!
-Do not speak from the perspective of anyone else.
-Stop speaking the moment you finish speaking from your perspective.
-Do not add anything else.
-Allow for breaks in the conversation so other characters may speak, following the flow of the original text.
+Remember, you are to emulate the style and character of {character_name} as described in the book.
+Speak uniquely each time, do not repeat phrases or dialogue.
+Speak in the first person, from the perspective of {character_name}
+Use '*' to describe your body movement, keeping it consistent with your character.
+Do not include dialogues from other characters, focus only on your character's perspective.
+Reproduce the original text in a dialogue format, avoiding description or narration.
+Pause appropriately in the conversation, allowing other characters to speak.
     """
         )
     )
 
 character_descriptions = [
-    "A detective known for his astute observational skills, analytical mind, and eccentric behavior. He is described as usually being late in the mornings unless he has been up all night.",
-    "Holmes's friend and roommate who often assists him in his cases. He is portrayed as an observer who tries to learn from Holmes's methods.",
-    "A visitor to Holmes and Watson's residence, he is described as a tall, thin man with a long nose like a beak, keen grey eyes set closely together behind gold-rimmed glasses. He appears professional but slightly unkempt."
+    "You are a detective known for your observational skills, analytical mind, and eccentric behavior. Respected for your successful investigations, you are an integral part of the story.",
+    "You are a physician and trustworthy friend to the protagonist - Sherlock Holmes. Often amazed by his friend's deductions, you become an observer, assisting Holmes in his investigation throughout the plot.",
+    "Known for your peculiar appearance, your character kicks off the narrative. A respected local physician making a house call to solve an ancestral mystery. You bring a sense of urgency and fear to the story, setting the tone for the mysteries to come."
 ]
+
 character_headers = [
     generate_character_header(character_name, character_description)
     for character_name, character_description in zip(
         character_names, character_descriptions
     )
 ]
+
 character_system_messages = [
     generate_character_system_message(character_name, character_headers)
     for character_name, character_headers in zip(character_names, character_headers)
 ]
 
-for (
-    character_name,
-    character_description,
-    character_header,
-    character_system_message,
-) in zip(
-    character_names,
-    character_descriptions,
-    character_headers,
-    character_system_messages,
-):
-    print(f"\n\n{character_name} Description:")
-    print(f"\n{character_description}")
-    print(f"\n{character_header}")
-    print(f"\n{character_system_message.content}")
+# for (
+#     character_name,
+#     character_description,
+#     character_header,
+#     character_system_message,
+# ) in zip(
+#     character_names,
+#     character_descriptions,
+#     character_headers,
+#     character_system_messages,
+# ):
+#     print(f"\n\n{character_name} Description:")
+#     print(f"\n{character_description}")
+#     print(f"\n{character_header}")
+#     print(f"\n{character_system_message.content}")
 
 class BidOutputParser(RegexParser):
     def get_format_instructions(self) -> str:
         return "Your response should be an integer delimited by angled brackets, like this: <int>."
 
-
 bid_parser = BidOutputParser(
     regex=r"<(\d+)>", output_keys=["bid"], default_output_key="bid"
 )
 
-def generate_character_bidding_template(character_header):
-    bidding_template = f"""{character_header}
+character_bidding_templates = [
+    f"""{character_header}
 
 {{message_history}}
 
-On the scale of 1 to 10, where 1 is the lowest and 10 is the highest, how much do you want to speak next, based on the original chapter text?
-
-Remember, you are re-creating Chapter 1 using only dialogue from your own character, so don't speak when it's someone else's turn to speak based on the original text.
-Allow for breaks in the conversation so other characters may speak, following the flow of the original text.
+Considering the flow of the original text and relevance of your character in the ongoing context - how likely is it that you as {character_name} should speak next? Rank on a scale from 1 to 10, with 1 being the lowest and 10 being the most suitable opportunity.
 
 {{recent_message}}
 
-{bid_parser.get_format_instructions()}
+Respond with your ranking. For example: <7>. 
 
-Do nothing else.
+Do not add any further dialogue or narrative.
     """
-    return bidding_template
-
-character_bidding_templates = [
-    generate_character_bidding_template(character_header)
     for character_header in character_headers
 ]
 
@@ -245,26 +207,7 @@ for character_name, bidding_template in zip(
     print(f"{character_name} Bidding Template:")
     print(bidding_template)
 
-# topic_specifier_prompt = [
-#     SystemMessage(content="You can make a task more specific."),
-#     HumanMessage(
-#         content=f"""{game_description}
-        
-#         You are the debate moderator.
-#         Please make the debate topic more specific. 
-#         Frame the debate topic as a problem to be solved.
-#         Be creative and imaginative.
-#         Please reply with the specified topic in {word_limit} words or less. 
-#         Speak directly to the presidential candidates: {*character_names,}.
-#         Do not add anything else."""
-#     ),
-# ]
-# specified_topic = ChatOpenAI(temperature=1.0)(topic_specifier_prompt).content
-
 specified_topic = game_description
-
-# print(f"Original topic:\n{topic}\n")
-# print(f"Detailed topic:\n{specified_topic}\n")
 
 original_text = f"""
 Mr. Sherlock Holmes, who was usually very late in the mornings,
@@ -615,12 +558,7 @@ n = 0
 
 simulator = DialogueSimulator(agents=characters, selection_function=select_next_speaker)
 simulator.reset()
-# simulator.inject("Context", specified_topic)
 simulator.inject("Original Text", original_text)
-
-# simulator.inject(""Debate Moderator"", specified_topic)
-# print(f"(Debate Moderator): {specified_topic}")
-# print("\n")
 
 while n < max_iters:
     name, message = simulator.step()
